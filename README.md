@@ -1,4 +1,4 @@
-curl_wrapper
-============
+# cURL Wrapper #
 
-A simple gui wrapper for curl written in Python
+## reason ##
+for some reason people I work with don't know how to use curl on the command line, so I through this together
