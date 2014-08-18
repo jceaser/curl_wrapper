@@ -119,7 +119,8 @@ class App:
                 parts = item[3:].split("=")
                 param = "--data-urlencode %s@%s" % (parts[0], parts[1])
                 out += "%s \\\n\t" % param
-                command.append(param.rstrip().lstrip())
+                command.append("--data-urlencode")
+                command.append("%s@%s" % (parts[0].lstrip(), parts[1]) )
 
         c = template % (out, self.url.get())
         command.append(self.url.get().rstrip())
