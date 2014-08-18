@@ -91,9 +91,14 @@ class App:
         self.cmd.grid(row=9,columnspan=4)
         self.run.grid(row=10,column=2,columnspan=1)
         self.quit.grid(row=10,column=3,columnspan=1)
+        
+        self.command = []
 
     def updateCmd(self):
         out = MutableString()
+        
+        command = ["curl","-s","-X","POST","--user-agent","'Post Maker thing'"]
+        
         template = "curl \\\n\t-s -X POST \\\n\t--user-agent 'Post Maker thing' \\\n\t%s%s"
         list = self.headers.get(0, self.headers.size())
         for item in list:
@@ -102,18 +107,26 @@ class App:
             pf = item.find("PF: ")
             if hh==0:
                 parts = item[3:].split("=")
-                out += " -H '%s: %s' \\\n\t" % (parts[0], parts[1])
+                head = "-H '%s: %s'" % (parts[0].lstrip(), parts[1])
+                out += "%s \\\n\t" % head
+                command.append(head.rstrip().lstrip())
             elif pp==0:
                 parts = item[3:].split("=")
-                out += " --data-urlencode %s \\\n\t" % (item[3:])
+                param = "--data-urlencode %s" % (item[3:])
+                out += "%s \\\n\t" % param
+                command.append(param.rstrip().lstrip())
             elif pf==0:
                 parts = item[3:].split("=")
-                out += " --data-urlencode %s@%s \\\n\t" % (parts[0], parts[1])
+                param = "--data-urlencode %s@%s" % (parts[0], parts[1])
+                out += "%s \\\n\t" % param
+                command.append(param.rstrip().lstrip())
 
         c = template % (out, self.url.get())
+        command.append(self.url.get().rstrip())
 
         self.cmd.delete(1.0, END)
         self.cmd.insert(INSERT,c)
+        self.command = command
 
     def addHeader(self):
         name = self.head_name.get()
@@ -134,8 +147,8 @@ class App:
         self.updateCmd()
 
     def doRun(self):
-        cmd = self.cmd.get(0.0, END)
-        call (cmd)
+        print self.command
+        call (self.command)
 
     def lookupList(self, name, def_list):
         try:
@@ -154,32 +167,23 @@ class App:
 
     def save(self):
         urls = list(self.url['values'])
-        #urls.append(self.url.get())
-
         head_names = self.head_name['values']
-        #head_names.append(self.head_name.get())
-
         head_values = self.head_value['values']
-        #head_values.append(self.head_value.get())
 
         if self.url.get() not in urls:
             urls.append(self.url.get())
             urls.sort()
             self.writeLines("url.values", urls)
 
-        if self.head_name.get() not in head_names
+        if self.head_name.get() not in head_names:
             head_names.append(self.head_name.get())
             head_names.sort()
             self.writeLines("head.names", urls)
 
-        if self.head_value.get() not in head_values
+        if self.head_value.get() not in head_values:
             head_values.append(self.head_value.get())
             head_values.sort()
             self.writeLines("head.values", urls)
-
-        #print head_names
-        #print head_values
-
 
     def writeLines(self, name, lines):
         try:
