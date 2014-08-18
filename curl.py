@@ -27,34 +27,31 @@ application/pdf
 
 class App:
     def __init__(self, master):
-        frame = Frame(master)
-        frame.config(pad=10)
         master.title("cURL wrapper")
-        frame.pack()
-        frame.focus_set()
+
+        frame = Frame(master)
+        self.frame = frame
+        self.frame.config(pad=10)
+        self.frame.pack()
+        self.frame.focus_set()
 
         self.url_label = Label(frame, text="URL")
-        self.url = Entry(frame,width=72)
-        self.url.insert(0,"http://server.host.com")
+        #self.url = Entry(frame,width=72)
+        self.url = self.lookupList('url.values', ("http://server.host.com/"))
+        self.url.config(width=72)
 
         self.head_lbl = Label(frame, text="HTTP Headers")
         self.head_name_lbl = Label(frame, text="Name")
         self.head_name = Combobox(frame)
 
         def_list = ("Accept", "Content-Type")
-        list = self.lookupList("head.names", def_list)
-
-        self.head_name['values'] = list
-        self.head_name.current(0)
+        self.head_name = self.lookupList("head.names", def_list)
 
         self.head_value_lbl = Label(frame, text="Value")
-        self.head_value = Combobox(frame)
 
         def_list = ("application/xml","text/plain","application/json","application/pdf")
-        list = self.lookupList('head.values', def_list)
+        self.head_value = self.lookupList('head.values', def_list)
 
-        self.head_value['values'] = list
-        self.head_value.current(0)
         self.head_add = Button(frame,text="Add Header",command=self.addHeader)
         self.headers = Listbox(frame,width=50)
 
@@ -147,12 +144,56 @@ class App:
             file.close()
         except IOError:
             list = def_list
-        return list
+
+        cbox = Combobox(self.frame)
+        cbox['values'] = list
+        #cbox['data'] = list
+        cbox.current(0)
+
+        return cbox
+
+    def save(self):
+        urls = list(self.url['values'])
+        #urls.append(self.url.get())
+
+        head_names = self.head_name['values']
+        #head_names.append(self.head_name.get())
+
+        head_values = self.head_value['values']
+        #head_values.append(self.head_value.get())
+
+        if self.url.get() not in urls:
+            urls.append(self.url.get())
+            urls.sort()
+            self.writeLines("url.values", urls)
+
+        if self.head_name.get() not in head_names
+            head_names.append(self.head_name.get())
+            head_names.sort()
+            self.writeLines("head.names", urls)
+
+        if self.head_value.get() not in head_values
+            head_values.append(self.head_value.get())
+            head_values.sort()
+            self.writeLines("head.values", urls)
+
+        #print head_names
+        #print head_values
+
+
+    def writeLines(self, name, lines):
+        try:
+            with open(name, "w+") as file:
+                for line in lines:
+                    file.write(line + "\n")
+                file.close
+        except IOError:
+            print ("could not write file" + name)
+
 
 root = Tk()
-
 app = App(root)
-
-#root.after(5000, lambda: root.focus_force())
 root.mainloop()
+app.save()
 root.destroy()
+
