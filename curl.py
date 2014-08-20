@@ -9,25 +9,9 @@ from UserString import MutableString
 from ttk import *
 from subprocess import call
 
-'''
-
-application/xml
-text/plain
-application/json
-application/pdf
-
-/opt/local/bin/curl \
-    -X POST \
-    --user-agent "GCMD-Client" \
-    -H "Accept: application/xml"
-    --data-urlencode record@./src/test/resources/dif.xml \
-        http://<host_name>.gsfc.nasa.gov/qatool/results?rules=gcmd-0.1
-'''
-
-
 class App:
     def __init__(self, master):
-        master.title("cURL wrapper")
+        master.title("cURL Wrapper")
 
         frame = Frame(master)
         self.frame = frame
@@ -35,8 +19,7 @@ class App:
         self.frame.pack()
         self.frame.focus_set()
 
-        self.url_label = Label(frame, text="URL")
-        #self.url = Entry(frame,width=72)
+        self.url_lbl = Label(frame, text="URL")
         self.url = self.lookupList('url.values', ("http://server.host.com/"))
         self.url.config(width=72)
 
@@ -53,7 +36,8 @@ class App:
         self.head_value = self.lookupList('head.values', def_list)
 
         self.head_add = Button(frame,text="Add Header",command=self.addHeader)
-        self.headers = Listbox(frame,width=50)
+        self.headers = Listbox(frame,width=50,selectmode=MULTIPLE)
+        self.headers_rm = Button(frame, text="Remove", command=self.rmHeader)
 
         self.param_lbl = Label(frame, text="Parameters")
         self.param_name_lbl = Label(frame, text="Name")
@@ -65,11 +49,32 @@ class App:
         self.param_addParam = Button(frame, text="Add Param", command=self.addParam)
         self.param_addFile = Button(frame, text="Add File", command=self.pickParamFile)
 
-        self.cmd = Text(frame, height=10, width=80)
+        self.cmd = Text(frame, height=10, width=90)
         self.run = Button(frame,text="Run",command=self.doRun,name="doRun")
         self.quit = Button(frame,text="Quit",command=frame.quit,name="quit")
 
-        self.url_label.grid(row=0,sticky=W)
+        '''
+Layout Phase:
+
+markdown table of the grid layout. spans between -> and <-
+
+|    | 0               | 1              | 2        | 3               | 4 | 5  |
+| -- | --------------- | -------------- | -------- | --------------- | - | -- |
+| 00 | url_l           | url -> 3       | -        | <-              |   |    |
+| 01 | head_lbl->3     | -              | <-       | headers->3 -y 7 | - | <- |
+| 02 | Head_name_lbl   | Head_name->2   | <-       | _               | - | -  |
+| 03 | head_value      | head_value->2  | <-       | _               | - | -  |
+| 04 | head_add->3     | -              | <-       | _               | - | -  |
+| 05 | param_lbl       | -              | <-       | _               | - | -  |
+| 06 | param_name_lbl  | param_name->2  | <-       | _               | - | -  |
+| 07 | param_value_lbl | param_value->2 | <-       | ^-              | - | -  |
+| 08 |                 | addFile        | addParam | remove->3       | - | <- |
+| 09 | cmd->6          | -              | -        | -               | - | <- |
+| 10 |                 |                | run      | quit            |   |    |
+        
+        '''
+
+        self.url_lbl.grid(row=0,sticky=W)
         self.url.grid(row=0,column=1,columnspan=3,sticky=E)
 
         self.head_lbl.grid(row=1,columnspan=3)
@@ -87,10 +92,12 @@ class App:
         self.param_addFile.grid(row=8, column=1)
         self.param_addParam.grid(row=8, column=2)
 
-        self.headers.grid(row=1,column=3,columnspan=2,rowspan=8)
-        self.cmd.grid(row=9,columnspan=4)
-        self.run.grid(row=10,column=2,columnspan=1)
-        self.quit.grid(row=10,column=3,columnspan=1)
+        self.headers.grid(row=1,column=3,columnspan=2,rowspan=7)
+        self.headers_rm.grid(row=8,column=3)
+        
+        self.cmd.grid(row=9,columnspan=6)
+        self.run.grid(row=10,column=2)
+        self.quit.grid(row=10,column=3)
         
         self.command = []
 
@@ -148,8 +155,16 @@ class App:
         self.updateCmd()
 
     def doRun(self):
+        file = asksaveasfilename(title="Save output",parent=self.frame)
+        if file == "": return
+        self.command.append(">")
+        self.command.append(file)
         print self.command
         call (self.command)
+    
+    def rmHeader(self):
+        for i in  reversed(self.headers.curselection()): self.headers.delete(i)
+        self.updateCmd()
 
     def lookupList(self, name, def_list):
         try:
@@ -161,7 +176,6 @@ class App:
 
         cbox = Combobox(self.frame)
         cbox['values'] = list
-        #cbox['data'] = list
         cbox.current(0)
 
         return cbox
@@ -195,10 +209,11 @@ class App:
         except IOError:
             print ("could not write file" + name)
 
+def main():
+    root = Tk()
+    app = App(root)
+    root.mainloop()
+    app.save()
+    root.destroy()
 
-root = Tk()
-app = App(root)
-root.mainloop()
-app.save()
-root.destroy()
-
+if __name__ == "__main__": main()
